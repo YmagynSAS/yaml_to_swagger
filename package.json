@@ -1,0 +1,43 @@
+{
+    "name": "grunt-yaml-to-swagger",
+    "description": "Convert YAML files into swagger compatible JSON Schema format",
+    "version": "0.0.1",
+    "homepage": "",
+    "author": {
+        "name": "Cyril GIACOPINO",
+        "email": "cgiacopino@ymagyn.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://bsh.plan.io/bsh-axa-smart-drive.axa-smart-drive.git"
+    },
+    "bugs": {
+        "url": ""
+    },
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "/blob/master/LICENSE-MIT"
+        }
+    ],
+    "engines": {
+        "node": ">= 0.8.0"
+    },
+    "scripts": {
+        "test": "grunt test"
+    },
+    "devDependencies": {
+        "grunt-contrib-jshint": "~0.10.0",
+        "grunt-contrib-clean": "~0.5.0",
+        "grunt-contrib-nodeunit": "~0.3.3",
+        "yamljs": "*",
+        "grunt": "~0.4.4",
+        "async": "*"
+    },
+    "peerDependencies": {
+        "grunt": "~0.4.4"
+    },
+    "keywords": [
+        "gruntplugin"
+    ]
+}
