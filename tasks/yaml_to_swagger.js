@@ -138,7 +138,7 @@ module.exports = function (grunt) {
                             var result = JSON.stringify(JSON.parse(result));
                             var pattern = new RegExp('\[MockType=(\w)+\]', "g");
                             var matches = result.match(/\[MockType=(\w)+\]/g);
-                            if (matches.length > 0) {
+                            if (matches!=null &&matches.length > 0) {
                                 for(var replace=0;replace<matches.length;replace++)
                                 {
                                     result = result.split(matches[replace]).join("");
