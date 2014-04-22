@@ -8,11 +8,11 @@
 
 'use strict';
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
 
     // Please see the Grunt documentation for more information regarding task
     // creation: http://gruntjs.com/creating-tasks
-    Array.prototype.getUnique = function() {
+    Array.prototype.getUnique = function () {
         var u = {}, a = [];
         for (var i = 0, l = this.length; i < l; ++i) {
             if (u.hasOwnProperty(this[i])) {
@@ -24,8 +24,6 @@ module.exports = function(grunt) {
         return a;
     }
 
-
-
     var primitives = [
         "array",
         "boolean",
@@ -35,6 +33,7 @@ module.exports = function(grunt) {
         "object",
         "string"
     ];
+
     function contains(a, obj) {
         var i = a.length;
         while (i--) {
@@ -44,9 +43,10 @@ module.exports = function(grunt) {
         }
         return false;
     }
+
     function extend(target) {
         var sources = [].slice.call(arguments, 1);
-        sources.forEach(function(source) {
+        sources.forEach(function (source) {
             for (var prop in source) {
                 target[prop] = source[prop];
             }
@@ -63,182 +63,117 @@ module.exports = function(grunt) {
         return true;
     }
 
-    function parseModels(route_definitions, options, base_filename, callback)
-    {
+    function execSync(cmd, args, callback) {
+        var options = {
+            // The command to execute. It should be in the system path.
+            cmd: cmd,
+            args: args
+        };
+        grunt.util.spawn(options, callback)
+    }
+
+    function parseFiles(files, options, callback) {
+        var fs = require('fs');
+        var path = require('path').resolve(options.route_path + '/');
+        var working = false;
+        var interval = setInterval(function () {
+            if (files.length > 0) {
+                if (working == false) {
+                    working = true;
+                    var file = files[0];
+                    var file_path = require('path').resolve(path + '/' + file);
+                    try {
+                        var route_definitions = require('yamljs').load(file_path);
+                    } catch (e) {
+                        console.log("error");
+                        grunt.fatal(e.message);
+                    }
+
+                    var base_filename = file.split(".yml")[0];
+                    var outputFilename = options.output_docs_path + "/" + base_filename + ".json";
+
+                    if (file == "api.yml") {
+                        var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
+                        fs.writeFileSync(outputFilename, pretty_route_definitions);
+                        grunt.log.ok(base_filename + ".json created");
+                        files.splice(0, 1);
+                        working = false;
+                    } else {
+                        var returnData = {};
+                        //console.log(JSON.stringify(route_definitions));
+                        var models = [];
+                        for (var j = 0; j < route_definitions.apis.length; j++) {
+                            var operations = route_definitions.apis[j].operations;
+                            for (var i = 0; i < operations.length; i++) {
+                                if (!contains(primitives, operations[i].type)) {
+                                    models.push(operations[i].type);
+                                }
+
+                            }
+                        }
+                        models = models.getUnique();
+                        parseModels(models, options, function (data) {
+                            route_definitions.models = data;
+                            var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
+                            fs.writeFileSync(outputFilename, pretty_route_definitions);
+                            grunt.log.ok(base_filename + ".json created");
+                            files.splice(0, 1);
+                            working = false;
+                        });
+                    }
+
+                }
+            } else {
+                clearInterval(interval);
+            }
+        }, 100);
+    }
+
+    function parseModels(models, options, callback) {
+        var fs = require('fs');
         var returnData = {};
-        //console.log(JSON.stringify(route_definitions));
-        var models = [];
-        for (var j = 0; j < route_definitions.apis.length; j++)
-        {
-            var operations = route_definitions.apis[j].operations;
-            for (var i = 0; i < operations.length; i++)
-            {
-                if (!contains(primitives, operations[i].type))
-                {
-                    models.push(operations[i].type);
+        var working = false;
+        var interval = setInterval(function () {
+            if (models.length > 0) {
+                if (working == false) {
+                    working = true;
+                    var args = ['schema', require("path").resolve(options.models_path + '/' + models[0] + '.ts')];
+                    execSync('typson', args, function (error, result, code) {
+                        if (error == null) {
+                            var pretty_schema = JSON.stringify(JSON.parse(result), undefined, 2);
+                            fs.writeFileSync(options.models_path + 'schema/' + models[0] + '.json', pretty_schema);
+                            returnData = extend(returnData, JSON.parse(result));
+                            models.splice(0, 1);
+                            working = false;
+                        } else {
+                            grunt.log.error('typson ' + args.join(" "));
+                            grunt.fatal(error);
+                        }
+
+                    });
+
                 }
-
-            }
-        }
-        models = models.getUnique();
-
-        var exec = require('child_process').exec,
-                child,
-                done = grunt.task.current.async(); // Tells Grunt that an async task is complete
-
-        var currentTask = 0;
-        for (var i = 0; i < models.length; i++)
-        {
-            var execSync = require("exec-sync");
-            execSync('typson schema ' + require("path").resolve(options.models_path + '/' + models[i] + '.ts'));
-            /*child = exec('typson schema ' + require("path").resolve(options.models_path + '/' + models[i] + '.ts'),
-             function(error, stdout, stderr) {
-             if (stderr == "")
-             {
-             returnData = extend(returnData, JSON.parse(stdout));
-             }
-             currentTask++;
-             });*/
-        }
-        setInterval(function()
-        {
-            if (currentTask == models.length)
-            {
-                if (!isEmpty(returnData))
-                {
-                    route_definitions.models = returnData;
-                }
-                callback(route_definitions, base_filename);
-            }
-        }, 100);
-    }
-
-    function makeRoutes(file, callback)
-    {
-
-    }
-
-    function doWork(files, callback)
-    {
-        console.log(files.length);
-        var currentTask = 0;
-        setTimeout(function()
-        {
-            currentTask = 3;
-        }, 1500);
-
-        setInterval(function()
-        {
-            if (currentTask == files.length)
-            {
-                callback();
+            } else {
+                clearInterval(interval);
+                callback(returnData);
             }
         }, 100);
 
     }
-    grunt.registerMultiTask('yaml_to_swagger', 'Convert YAML files into swagger compatible JSON Schema format', function() {
+
+    grunt.registerMultiTask('yaml_to_swagger', 'Convert YAML files into swagger compatible JSON Schema format', function () {
 
         var fs = require('fs');
         var options = this.options();
+
+        var done = this.async();
+
         var path = require('path').resolve(options.route_path + '/');
-        var done = grunt.task.current.async();
         var files = fs.readdirSync(path);
-        require("async").each(files, function(file, callback) {
-            if(file == "api.yml")
-            {
-                var file_path = require('path').resolve(path + '/' + file);
-                var route_definitions = require('yamljs').load(file_path);
-                var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
-                var base_filename = file.split(".yml")[0];
-                var outputFilename = options.output_docs_path + "/" + base_filename + ".json";
-                fs.writeFileSync(outputFilename, pretty_route_definitions);
-                grunt.log.ok(base_filename + ".json created");
-            }
-            if (file.match(/.+\.yml/g) !== null && file != "api.yml") {
-                var file_path = require('path').resolve(path + '/' + file);
-                var route_definitions = require('yamljs').load(file_path);
-                var base_filename = file.split(".yml")[0];
-                var returnData = {};
-                //console.log(JSON.stringify(route_definitions));
-                var models = [];
-                for (var j = 0; j < route_definitions.apis.length; j++)
-                {
-                    var operations = route_definitions.apis[j].operations;
-                    for (var i = 0; i < operations.length; i++)
-                    {
-                        if (!contains(primitives, operations[i].type))
-                        {
-                            models.push(operations[i].type);
-                        }
-
-                    }
-                }
-                models = models.getUnique();
-
-                if (models.length > 0) {
-                    require("async").each(models, function(model, callbackTest) {
-                        var exec = require('child_process').exec;
-                        exec('typson schema ' + require("path").resolve(options.models_path + '/' + model + '.ts'),
-                                function(error, stdout, stderr) {
-                                    if (stderr == "")
-                                    {
-                                        returnData = extend(returnData, JSON.parse(stdout));
-
-                                        route_definitions.models = returnData;
-                                        var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
-                                        var outputFilename = options.output_docs_path + "/" + base_filename + ".json";
-                                        fs.writeFileSync(outputFilename, pretty_route_definitions);
-                                        grunt.log.ok(base_filename + ".json created");
-                                        callbackTest();
-                                    }
-                                });
-                    }, function(err)
-                    {
-                        if (err) {
-                            // One of the iterations produced an error.
-                            // All processing will now stop.
-                            console.log('A file failed to process');
-                        } else {
-                            callback();
-                        }
-                    });
-                } else {
-                    var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
-                    var outputFilename = options.output_docs_path + "/" + base_filename + ".json";
-                    fs.writeFileSync(outputFilename, pretty_route_definitions);
-                    grunt.log.ok(base_filename + ".json created");
-                }
-
-            }
-        }, function(err) {
-            // if any of the file processing produced an error, err would equal that error
-            if (err) {
-                // One of the iterations produced an error.
-                // All processing will now stop.
-                console.log('A file failed to process');
-            } else {
-                console.log('All files have been processed successfully');
-            }
+        parseFiles(files, options, function () {
+            console.log("ici");
+            done();
         });
-
-        /*fs.readdirSync(path).forEach(function(file) {
-         if (file.match(/.+\.yml/g) !== null && file != "api.yml") {
-         var file_path = require('path').resolve(path + '/' + file);
-         var route_definitions = require('yamljs').load(file_path);
-         var base_filename = file.split(".yml")[0];
-         var done = grunt.task.current.async();
-         parseModels(route_definitions, options, base_filename, function(route_definitions, base_filename)
-         {
-         console.log(route_definitions);
-         var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
-         var outputFilename = options.output_docs_path + "/" + base_filename + ".json";
-         fs.writeFileSync(outputFilename, pretty_route_definitions);
-         grunt.log.ok(base_filename + ".json created");
-         done();
-         });
-         
-         }
-         });*/
     });
 
 };
