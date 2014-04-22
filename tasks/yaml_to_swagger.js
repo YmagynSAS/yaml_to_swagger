@@ -92,35 +92,27 @@ module.exports = function (grunt) {
                     var base_filename = file.split(".yml")[0];
                     var outputFilename = options.output_docs_path + "/" + base_filename + ".json";
 
-                    if (file == "api.yml") {
+                    var returnData = {};
+                    //console.log(JSON.stringify(route_definitions));
+                    var models = [];
+                    for (var j = 0; j < route_definitions.apis.length; j++) {
+                        var operations = route_definitions.apis[j].operations;
+                        for (var i = 0; i < operations.length; i++) {
+                            if (!contains(primitives, operations[i].type)) {
+                                models.push(operations[i].type);
+                            }
+
+                        }
+                    }
+                    models = models.getUnique();
+                    parseModels(models, options, function (data) {
+                        route_definitions.models = data;
                         var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
                         fs.writeFileSync(outputFilename, pretty_route_definitions);
                         grunt.log.ok(base_filename + ".json created");
                         files.splice(0, 1);
                         working = false;
-                    } else {
-                        var returnData = {};
-                        //console.log(JSON.stringify(route_definitions));
-                        var models = [];
-                        for (var j = 0; j < route_definitions.apis.length; j++) {
-                            var operations = route_definitions.apis[j].operations;
-                            for (var i = 0; i < operations.length; i++) {
-                                if (!contains(primitives, operations[i].type)) {
-                                    models.push(operations[i].type);
-                                }
-
-                            }
-                        }
-                        models = models.getUnique();
-                        parseModels(models, options, function (data) {
-                            route_definitions.models = data;
-                            var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
-                            fs.writeFileSync(outputFilename, pretty_route_definitions);
-                            grunt.log.ok(base_filename + ".json created");
-                            files.splice(0, 1);
-                            working = false;
-                        });
-                    }
+                    });
 
                 }
             } else {
@@ -168,10 +160,18 @@ module.exports = function (grunt) {
 
         var done = this.async();
 
-        var path = require('path').resolve(options.route_path + '/');
-        var files = fs.readdirSync(path);
+        var path_api = require('path').resolve(options.route_path + '/api.yml');
+        var api_definitions = require('yamljs').load(path_api);
+        var files = [];
+        for (var i = 0; i < api_definitions.apis.length; i++) {
+            var path = api_definitions.apis[i].path.split("/").join("");
+            files.push(api_definitions.apis[i].path + '.yml');
+        }
+        var outputFilename = options.output_docs_path + "/api.json";
+        var pretty_route_definitions = JSON.stringify(api_definitions, undefined, 2);
+        fs.writeFileSync(outputFilename, pretty_route_definitions);
+        grunt.log.ok("api.json created");
         parseFiles(files, options, function () {
-            console.log("ici");
             done();
         });
     });
