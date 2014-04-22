@@ -134,6 +134,16 @@ module.exports = function (grunt) {
                         if (error == null) {
                             var pretty_schema = JSON.stringify(JSON.parse(result), undefined, 2);
                             fs.writeFileSync(options.models_path + 'schema/' + models[0] + '.json', pretty_schema);
+
+                            var result = JSON.stringify(JSON.parse(result));
+                            var pattern = new RegExp('\[MockType=(\w)+\]', "g");
+                            var matches = result.match(/\[MockType=(\w)+\]/g);
+                            if (matches.length > 0) {
+                                for(var replace=0;replace<matches.length;replace++)
+                                {
+                                    result = result.split(matches[replace]).join("");
+                                }
+                            }
                             returnData = extend(returnData, JSON.parse(result));
                             models.splice(0, 1);
                             working = false;
@@ -170,7 +180,7 @@ module.exports = function (grunt) {
         var outputFilename = options.output_docs_path + "/api.json";
         var pretty_route_definitions = JSON.stringify(api_definitions, undefined, 2);
         fs.writeFileSync(outputFilename, pretty_route_definitions);
-        grunt.log.ok("api.json created");
+        grunt.log.ok("/api.json created");
         parseFiles(files, options, function () {
             done();
         });
