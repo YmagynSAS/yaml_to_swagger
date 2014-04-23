@@ -107,7 +107,17 @@ module.exports = function (grunt) {
                     models = models.getUnique();
                     parseModels(models, options, function (data) {
                         route_definitions.models = data;
+
                         var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
+
+                        var matches = result.match(/:(\w)+\]/g);
+                        if (matches != null && matches.length > 0) {
+                            for (var replace = 0; replace < matches.length; replace++) {
+                                var field = matches[replace].split(":").join("");
+                                pretty_route_definitions = pretty_route_definitions.split(matches[replace]).join("{" + field + "}");
+                            }
+                        }
+
                         fs.writeFileSync(outputFilename, pretty_route_definitions);
                         grunt.log.ok(base_filename + ".json created");
                         files.splice(0, 1);
