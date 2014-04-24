@@ -143,7 +143,9 @@ module.exports = function (grunt) {
                     var args = ['schema', require("path").resolve(options.models_path + '/' + models[0] + '.ts')];
                     execSync('typson', args, function (error, result, code) {
                         if (error == null) {
-                            var result = JSON.stringify(JSON.parse(result));
+                            var schemaJson = JSON.parse(result);
+                            schemaJson.basePath = options.base_url_ws;
+                            var result = JSON.stringify();
                             var pattern = new RegExp('\[MockType=(\w)+\]', "g");
                             var matches = result.match(/\[MockType=(\w)+\]/g);
                             if (matches != null && matches.length > 0) {
