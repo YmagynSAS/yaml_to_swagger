@@ -111,7 +111,7 @@ module.exports = function (grunt) {
 
                         var pretty_route_definitions = JSON.stringify(route_definitions, undefined, 2);
 
-                        var matches = pretty_route_definitions.match(/:(\w)+/g);
+                        var matches = pretty_route_definitions.match(/:([a-zA-Z][^0-9])+/g);
                         if (matches != null && matches.length > 0) {
                             for (var replace = 0; replace < matches.length; replace++) {
                                 var field = matches[replace].split(":").join("");
