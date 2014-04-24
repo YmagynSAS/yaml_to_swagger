@@ -84,6 +84,9 @@ module.exports = function (grunt) {
                     var file_path = require('path').resolve(path + '/' + file);
                     try {
                         var route_definitions = require('yamljs').load(file_path);
+                        var schemaJson = JSON.parse(route_definitions);
+                        schemaJson.basePath = options.base_url_ws;
+                        route_definitions = JSON.stringify(schemaJson);
                     } catch (e) {
                         console.log("error");
                         grunt.fatal(e.message);
@@ -143,9 +146,7 @@ module.exports = function (grunt) {
                     var args = ['schema', require("path").resolve(options.models_path + '/' + models[0] + '.ts')];
                     execSync('typson', args, function (error, result, code) {
                         if (error == null) {
-                            var schemaJson = JSON.parse(result);
-                            schemaJson.basePath = options.base_url_ws;
-                            var result = JSON.stringify(schemaJson);
+                            var result = JSON.stringify(JSON.parse(result));
                             var pattern = new RegExp('\[MockType=(\w)+\]', "g");
                             var matches = result.match(/\[MockType=(\w)+\]/g);
                             if (matches != null && matches.length > 0) {
@@ -194,9 +195,6 @@ module.exports = function (grunt) {
                     var args = ['schema', require("path").resolve(options.models_path + '/' + models[0])];
                     execSync('typson', args, function (error, result, code) {
                         if (error == null) {
-                            var schemaJson = JSON.parse(result);
-                            schemaJson.basePath = options.base_url_ws;
-                            var result = JSON.stringify(schemaJson);
                             var pretty_schema = JSON.stringify(JSON.parse(result), undefined, 2);
                             fs.writeFileSync(options.models_path + 'schema/' + models[0].split(".ts").join('.json'), pretty_schema);
                             models.splice(0, 1);
