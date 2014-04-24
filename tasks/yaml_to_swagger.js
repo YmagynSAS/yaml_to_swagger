@@ -84,9 +84,7 @@ module.exports = function (grunt) {
                     var file_path = require('path').resolve(path + '/' + file);
                     try {
                         var route_definitions = require('yamljs').load(file_path);
-                        var schemaJson = JSON.parse(route_definitions);
-                        schemaJson.basePath = options.base_url_ws;
-                        route_definitions = JSON.stringify(schemaJson);
+                        route_definitions.basePath = options.base_url_ws;
                     } catch (e) {
                         console.log("error");
                         grunt.fatal(e.message);
