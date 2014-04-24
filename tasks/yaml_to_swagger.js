@@ -145,7 +145,7 @@ module.exports = function (grunt) {
                         if (error == null) {
                             var schemaJson = JSON.parse(result);
                             schemaJson.basePath = options.base_url_ws;
-                            var result = JSON.stringify();
+                            var result = JSON.stringify(schemaJson);
                             var pattern = new RegExp('\[MockType=(\w)+\]', "g");
                             var matches = result.match(/\[MockType=(\w)+\]/g);
                             if (matches != null && matches.length > 0) {
