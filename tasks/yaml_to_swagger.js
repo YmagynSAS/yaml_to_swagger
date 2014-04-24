@@ -146,7 +146,6 @@ module.exports = function (grunt) {
                             var schemaJson = JSON.parse(result);
                             schemaJson.basePath = options.base_url_ws;
                             var result = JSON.stringify(schemaJson);
-                            console.log(result);
                             var pattern = new RegExp('\[MockType=(\w)+\]', "g");
                             var matches = result.match(/\[MockType=(\w)+\]/g);
                             if (matches != null && matches.length > 0) {
@@ -195,6 +194,9 @@ module.exports = function (grunt) {
                     var args = ['schema', require("path").resolve(options.models_path + '/' + models[0])];
                     execSync('typson', args, function (error, result, code) {
                         if (error == null) {
+                            var schemaJson = JSON.parse(result);
+                            schemaJson.basePath = options.base_url_ws;
+                            var result = JSON.stringify(schemaJson);
                             var pretty_schema = JSON.stringify(JSON.parse(result), undefined, 2);
                             fs.writeFileSync(options.models_path + 'schema/' + models[0].split(".ts").join('.json'), pretty_schema);
                             models.splice(0, 1);
