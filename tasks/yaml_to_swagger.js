@@ -115,6 +115,7 @@ module.exports = function (grunt) {
                         if (matches != null && matches.length > 0) {
                             for (var replace = 0; replace < matches.length; replace++) {
                                 var field = matches[replace].split(":").join("");
+                                console.log(matches[replace]);
                                 pretty_route_definitions = pretty_route_definitions.split(matches[replace]).join("{" + field + "}");
                             }
                         }
