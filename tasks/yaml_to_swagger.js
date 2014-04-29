@@ -102,9 +102,11 @@ module.exports = function (grunt) {
                             if (!contains(primitives, operations[i].type)) {
                                 models.push(operations[i].type);
                             }
-                            for (var j = 0; j < operations[i].parameters.length; j++) {
-                                if (!contains(primitives, operations[i].parameters[j].type)) {
-                                    models.push(operations[i].parameters[j].type);
+                            if(operations[i].parameters!=undefined) {
+                                for (var k = 0; k < operations[i].parameters.length; k++) {
+                                    if (!contains(primitives, operations[i].parameters[k].type)) {
+                                        models.push(operations[i].parameters[k].type);
+                                    }
                                 }
                             }
                         }
