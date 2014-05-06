@@ -149,6 +149,7 @@ module.exports = function (grunt) {
                 if (working == false) {
                     working = true;
                     var args = ['schema', require("path").resolve(options.models_path + '/' + models[0] + '.ts')];
+                    console.log('typson ' + args.join(" "));
                     execSync('typson', args, function (error, result, code) {
                         if (error == null) {
                             var result = JSON.stringify(JSON.parse(result));
