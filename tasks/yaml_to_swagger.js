@@ -111,6 +111,7 @@ module.exports = function (grunt) {
                             }
                         }
                     }
+                    console.log(models);
                     models = models.getUnique();
                     parseModels(models, options, function (data) {
                         route_definitions.models = data;
