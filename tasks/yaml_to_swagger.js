@@ -72,6 +72,8 @@ module.exports = function (grunt) {
         grunt.util.spawn(options, callback)
     }
 
+
+
     function parseFiles(files, options, callback) {
         var fs = require('fs');
         var path = require('path').resolve(options.route_path + '/');
@@ -111,7 +113,6 @@ module.exports = function (grunt) {
                             }
                         }
                     }
-                    console.log(models);
                     models = models.getUnique();
                     parseModels(models, options, function (data) {
                         route_definitions.models = data;
@@ -140,6 +141,43 @@ module.exports = function (grunt) {
         }, 100);
     }
 
+    function parseInnerModel(model,options)
+    {
+
+        var returnData = [];
+        var models = [];
+        var fs = require('fs');
+        model=model.split('[]').join('');
+
+        var path = require("path").resolve(options.models_path + '/schema/' + model + '.json');
+        if(fs.existsSync(path))
+        {
+            var schema = JSON.parse(fs.readFileSync(path));
+            if(schema[model]!=undefined)
+            {
+                var properties = schema[model].properties;
+                if(properties!=undefined)
+                {
+                    for(var i in properties)
+                    {
+                        var property = properties[i];
+                        var ref = property['$ref'];
+                        if(ref!=undefined)
+                        {
+                            models.push(ref);
+                            models = models.concat(parseInnerModel(ref,options));
+                        }
+
+                    }
+                }
+            }else{
+                //console.log(">>>>>>>>>>>>>> no model "+model);
+                //console.log(schema);
+            }
+        }
+        return models;
+    }
+
     function parseModels(models, options, callback) {
         var fs = require('fs');
         var returnData = {};
@@ -149,7 +187,6 @@ module.exports = function (grunt) {
                 if (working == false) {
                     working = true;
                     var args = ['schema', require("path").resolve(options.models_path + '/' + models[0] + '.ts')];
-                    console.log('typson ' + args.join(" "));
                     execSync('typson', args, function (error, result, code) {
                         if (error == null) {
                             var result = JSON.stringify(JSON.parse(result));
@@ -160,7 +197,10 @@ module.exports = function (grunt) {
                                     result = result.split(matches[replace]).join("");
                                 }
                             }
-                            returnData = extend(returnData, JSON.parse(result));
+                            var current_data = JSON.parse(result);
+                            //console.log(current_data);
+                            models = models.concat(parseInnerModel(models[0],options));
+                            returnData = extend(returnData, current_data);
                             models.splice(0, 1);
                             working = false;
                         } else {
